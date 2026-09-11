@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aiinfinite · 数据流光</title>
+<style>
+  :root {
+    --panel-bg: rgba(10, 18, 38, .55);
+    --panel-line: rgba(140, 180, 255, .18);
+    --panel-text: #dfe9ff;
+    --panel-dim: #8fa3c8;
+    --accent: #ffd76a;
+    --accent2: #5db8ff;
+  }
+  body.env-light {
+    --panel-bg: rgba(255, 255, 255, .6);
+    --panel-line: rgba(30, 60, 120, .18);
+    --panel-text: #1c2b4a;
+    --panel-dim: #5a6c8f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3vh; padding: 4vh 4vw; overflow: hidden;
+    background: radial-gradient(1200px at 50% 38%, #14305e 0%, #0a1c3c 48%, #060f22 100%);
+    transition: background .5s ease;
+  }
+  body[data-env="black"] { background: #05060a; }
+  body[data-env="warm"]  { background: linear-gradient(135deg, #2b1a05 0%, #553408 48%, #170d03 100%); }
+  body[data-env="light"] { background: #f4f6fb; }
+  body[data-env="checker"] {
+    background:
+      conic-gradient(#d4d9e3 0 25%, #eef1f7 0 50%, #d4d9e3 0 75%, #eef1f7 0) 0 0 / 28px 28px;
+  }
+  body[data-env="custom"] { background: var(--custom-bg, #101418); }
+
+  .brand {
+    position: fixed; top: 22px; left: 26px; z-index: 10;
+    font-size: 13px; letter-spacing: .16em; color: var(--panel-text);
+    display: flex; align-items: center; gap: 10px; user-select: none;
+    transition: color .4s;
+  }
+  .brand .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: linear-gradient(120deg, var(--accent2), var(--accent));
+    box-shadow: 0 0 10px var(--accent2);
+  }
+  .brand small { color: var(--panel-dim); letter-spacing: .1em; }
+
+  .hint {
+    position: fixed; top: 24px; right: 26px; z-index: 10;
+    font-size: 12px; color: var(--panel-dim); letter-spacing: .08em; user-select: none;
+    transition: color .4s;
+  }
+
+  /* ---------- stage ---------- */
+  .stage { position: relative; width: min(92vw, 1560px); }
+  .logo {
+    display: block; width: 100%; height: auto;
+    animation: breathe 7s ease-in-out infinite;
+  }
+  body.env-light .logo {
+    filter: drop-shadow(0 5px 16px rgba(20, 40, 90, .30)) drop-shadow(0 1px 3px rgba(20,40,90,.18));
+  }
+  @keyframes breathe {
+    0%, 100% { filter: drop-shadow(0 0 22px rgba(93, 184, 255, .10)); }
+    50%      { filter: drop-shadow(0 0 30px rgba(255, 215, 106, .12)); }
+  }
+  body.env-light .logo { animation: none; }
+  .flow { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .flow .guide { stroke: rgba(120, 220, 255, .8); stroke-width: 1.2; stroke-dasharray: 5 7; fill: none; visibility: hidden; }
+  .flow.show-guide .guide { visibility: visible; }
+  .flow .current { fill: none; stroke-linecap: round; }
+  .flow .trail   { fill: none; stroke-linecap: round; }
+  .flow text.glyph {
+    font: 600 11px "SF Mono", ui-monospace, Menlo, monospace;
+    text-anchor: middle; letter-spacing: .08em;
+    paint-order: stroke; stroke: rgba(6, 12, 28, .55); stroke-width: 2.4px;
+  }
+  body.env-light .flow .c1 { opacity: .30; }
+  body.env-light .flow .c2 { opacity: .20; }
+  body.env-light .flow text.glyph {
+    stroke: rgba(255, 255, 255, .75);
+  }
+
+  /* ---------- control panel ---------- */
+  .panel {
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap; justify-content: center;
+    padding: 12px 22px; border-radius: 16px;
+    background: var(--panel-bg); border: 1px solid var(--panel-line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    color: var(--panel-text); transition: background .4s, border-color .4s, color .4s;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .25);
+  }
+  .panel .group { display: flex; align-items: center; gap: 8px; }
+  .panel .label { font-size: 12px; color: var(--panel-dim); letter-spacing: .06em; white-space: nowrap; }
+  .env-btn {
+    padding: 5px 12px; border-radius: 999px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--panel-line); background: transparent; color: var(--panel-text);
+    transition: all .2s; white-space: nowrap;
+  }
+  .env-btn:hover { border-color: var(--accent2); }
+  .env-btn.on { background: linear-gradient(120deg, rgba(93,184,255,.25), rgba(255,215,106,.25)); border-color: var(--accent2); }
+  input[type="range"] { width: 92px; accent-color: var(--accent2); }
+  input[type="color"] {
+    width: 30px; height: 26px; border: 1px solid var(--panel-line); border-radius: 7px;
+    background: transparent; cursor: pointer; padding: 1px;
+  }
+  .switch { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--panel-dim); cursor: pointer; user-select: none; white-space: nowrap; }
+  .switch input { accent-color: var(--accent2); width: 14px; height: 14px; cursor: pointer; }
+  #playBtn {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 13px;
+    border: 1px solid var(--panel-line); background: transparent; color: var(--panel-text);
+    transition: all .2s;
+  }
+  #playBtn:hover { border-color: var(--accent2); }
+</style>
+</head>
+<body data-env="deep">
+  <div class="brand"><span class="dot"></span>aiinfinite <small>· 数据流光 DATA FLOW</small></div>
+  <div class="hint">背景自适应 — 切换下方环境试试</div>
+
+  <div class="stage">
+    <img class="logo" src="assets/logo-transparent.png" alt="aiinfinite logo" draggable="false">
+    <svg class="flow" id="flow" viewBox="0 0 1774 887" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <radialGradient id="headGold" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff8e0"/><stop offset="42%" stop-color="#ffd76a"/><stop offset="100%" stop-color="#ffd76a" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="headBlue" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#eef8ff"/><stop offset="42%" stop-color="#5db8ff"/><stop offset="100%" stop-color="#5db8ff" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="headWhite" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#dfe9ff"/><stop offset="100%" stop-color="#dfe9ff" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3.4"/>
+        </filter>
+        <filter id="headGlow" x="-140%" y="-140%" width="380%" height="380%">
+          <feGaussianBlur stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <g id="pathsLayer"></g>
+      <g id="packetsLayer"></g>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="group" id="envGroup">
+      <span class="label">环境</span>
+      <button class="env-btn on" data-env="deep">深邃蓝</button>
+      <button class="env-btn" data-env="black">极夜黑</button>
+      <button class="env-btn" data-env="warm">琥珀金</button>
+      <button class="env-btn" data-env="light">晨雾白</button>
+      <button class="env-btn" data-env="checker">透明棋盘</button>
+      <input type="color" id="customColor" value="#101418" title="自定义背景色">
+    </div>
+    <div class="group">
+      <span class="label">流速</span>
+      <input type="range" id="speed" min="0" max="300" value="100">
+      <span class="label">密度</span>
+      <input type="range" id="density" min="1" max="6" value="3" step="1">
+    </div>
+    <label class="switch"><input type="checkbox" id="glyphs" checked>数据字符</label>
+    <label class="switch"><input type="checkbox" id="guide">流线引导</label>
+    <button id="playBtn" title="播放 / 暂停">⏸</button>
+  </div>
+
+<script src="assets/paths-data.js"></script>
+<script>
+(() => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const { w, h, paths } = window.AIINFINITE_PATHS;
+  const flow = document.getElementById("flow");
+  const pathsLayer = document.getElementById("pathsLayer");
+  const packetsLayer = document.getElementById("packetsLayer");
+  const GLYPHS = ["0", "1", "0", "1", "01", "10", "∞", "11", "0x1F"];
+
+  const COLOR = {
+    gold:  { core: "#ffd76a", head: "url(#headGold)" },
+    blue:  { core: "#5db8ff", head: "url(#headBlue)" },
+    white: { core: "#e6efff", head: "url(#headWhite)" },
+  };
+
+  const arcs = paths.map((p, i) => {
+    const m = document.createElementNS(SVGNS, "path");
+    m.setAttribute("d", p.d);
+    m.setAttribute("fill", "none");
+    m.setAttribute("stroke", "none");
+    pathsLayer.appendChild(m);
+    const L = m.getTotalLength();
+
+    const guide = m.cloneNode();
+    guide.setAttribute("class", "guide");
+    pathsLayer.appendChild(guide);
+
+    const cur = m.cloneNode();
+    cur.setAttribute("class", "current c1");
+    cur.setAttribute("stroke", COLOR[p.hue].core);
+    cur.setAttribute("stroke-width", "7");
+    cur.setAttribute("opacity", "0.13");
+    cur.setAttribute("filter", "url(#soft)");
+    pathsLayer.appendChild(cur);
+    const cur2 = m.cloneNode();
+    cur2.setAttribute("class", "current c2");
+    cur2.setAttribute("stroke", "#ffffff");
+    cur2.setAttribute("stroke-width", "2.4");
+    cur2.setAttribute("opacity", "0.10");
+    cur2.setAttribute("filter", "url(#soft)");
+    pathsLayer.appendChild(cur2);
+
+    return { d: p.d, hue: p.hue, m, guide, cur, cur2, L,
+             dir: (i % 2 === 0 ? 1 : -1),       // flow direction per arc
+             cpos: Math.random() * L, cpos2: Math.random() * L };
+  });
+
+  // ---------- packets ----------
+  let packets = [];
+  const densityInput = document.getElementById("density");
+
+  function makePacket(arc) {
+    const g = document.createElementNS(SVGNS, "g");
+    const trail = document.createElementNS(SVGNS, "path");
+    trail.setAttribute("d", arc.d);
+    trail.setAttribute("class", "trail");
+    trail.setAttribute("filter", "url(#soft)");
+    const head = document.createElementNS(SVGNS, "circle");
+    head.setAttribute("filter", "url(#headGlow)");
+    const text = document.createElementNS(SVGNS, "text");
+    text.setAttribute("class", "glyph");
+    g.appendChild(trail); g.appendChild(head); g.appendChild(text);
+    packetsLayer.appendChild(g);
+    return respawn({
+      g, trail, head, text, arc,
+      pos: Math.random() * arc.L,
+      v: 120 + Math.random() * 110,
+      size: 0.72 + Math.random() * 0.6,
+      trailLen: 46 + Math.random() * 40,
+      glyph: Math.random() < 0.42 ? GLYPHS[(Math.random() * GLYPHS.length) | 0] : null,
+      col: Math.random() < 0.62 ? arc.hue : (["gold", "blue", "white"][(Math.random() * 3) | 0]),
+    });
+  }
+
+  function respawn(pk) {
+    pk.pos = 0;
+    pk.v = 120 + Math.random() * 110;
+    pk.size = 0.72 + Math.random() * 0.6;
+    pk.trailLen = 46 + Math.random() * 40;
+    pk.glyph = Math.random() < 0.42 ? GLYPHS[(Math.random() * GLYPHS.length) | 0] : null;
+    pk.col = Math.random() < 0.62 ? pk.arc.hue : (["gold", "blue", "white"][(Math.random() * 3) | 0]);
+    pk.text.textContent = pk.glyph || "";
+    pk.text.setAttribute("fill", COLOR[pk.col].core);
+    pk.head.setAttribute("fill", COLOR[pk.col].head);
+    pk.trail.setAttribute("stroke", COLOR[pk.col].core);
+    return pk;
+  }
+
+  function syncPackets() {
+    const n = parseInt(densityInput.value, 10);
+    const target = arcs.length * n;
+    while (packets.length < target) packets.push(makePacket(arcs[packets.length % arcs.length]));
+    while (packets.length > target) packets.pop().g.remove();
+  }
+  syncPackets();
+
+  // ---------- animation loop ----------
+  let speed = 1.0, playing = true, last = performance.now();
+  const FADE = 60;
+
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (playing && speed > 0) {
+      for (const a of arcs) {
+        const dash = Math.max(120, a.L * 0.2);
+        a.cpos = (a.cpos + 88 * speed * dt) % (a.L + dash);
+        a.cpos2 = (a.cpos2 + 64 * speed * dt) % (a.L + dash);
+        for (const el of [a.cur, a.cur2]) {
+          el.setAttribute("stroke-dasharray", `${dash} ${a.L + dash}`);
+        }
+        a.cur.setAttribute("stroke-dashoffset", dash - a.cpos);
+        a.cur2.setAttribute("stroke-dashoffset", (dash - a.cpos2) * 0.9);
+      }
+      for (const pk of packets) {
+        pk.pos += pk.v * pk.size * speed * dt;
+        if (pk.pos > pk.arc.L + pk.trailLen) respawn(pk);
+        const raw = pk.arc.dir > 0 ? pk.pos : pk.arc.L - pk.pos;
+        const pt = pk.arc.m.getPointAtLength(Math.max(0, Math.min(pk.arc.L, raw)));
+        const fade = Math.max(0, Math.min(1, pk.pos / FADE)) *
+                     Math.max(0, Math.min(1, (pk.arc.L - pk.pos) / FADE));
+        pk.g.setAttribute("opacity", (0.92 * fade).toFixed(3));
+        pk.head.setAttribute("cx", pt.x.toFixed(1));
+        pk.head.setAttribute("cy", pt.y.toFixed(1));
+        pk.text.setAttribute("x", pt.x.toFixed(1));
+        pk.text.setAttribute("y", (pt.y - 11 - 4 * pk.size).toFixed(1));
+        const tl = pk.trailLen;
+        const off = ((tl - raw) % (tl + pk.arc.L) + (tl + pk.arc.L)) % (tl + pk.arc.L);
+        pk.trail.setAttribute("stroke-dasharray", `${tl} ${pk.arc.L + tl}`);
+        pk.trail.setAttribute("stroke-dashoffset", off);
+        pk.trail.setAttribute("stroke-width", (4.6 * pk.size).toFixed(1));
+        pk.head.setAttribute("r", (7.2 * pk.size).toFixed(1));
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- controls ----------
+  const speedInput = document.getElementById("speed");
+  speedInput.addEventListener("input", () => { speed = speedInput.value / 100; });
+  densityInput.addEventListener("input", syncPackets);
+  document.getElementById("glyphs").addEventListener("change", (e) => {
+    packetsLayer.classList.toggle("no-glyph", !e.target.checked);
+    document.querySelectorAll(".flow text.glyph").forEach(t => {
+      t.style.display = e.target.checked ? "" : "none";
+    });
+  });
+  document.getElementById("guide").addEventListener("change", (e) => {
+    flow.classList.toggle("show-guide", e.target.checked);
+  });
+  const playBtn = document.getElementById("playBtn");
+  playBtn.addEventListener("click", () => {
+    playing = !playing;
+    playBtn.textContent = playing ? "⏸" : "▶";
+  });
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    playing = false; playBtn.textContent = "▶";
+  }
+
+  // environments
+  const envGroup = document.getElementById("envGroup");
+  const body = document.body;
+  envGroup.querySelectorAll(".env-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      envGroup.querySelectorAll(".env-btn").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      body.dataset.env = btn.dataset.env;
+      body.classList.toggle("env-light", btn.dataset.env === "light" || btn.dataset.env === "checker");
+    });
+  });
+  function isLight(hex) {
+    const m = hex && hex.match(/^#([0-9a-f]{6})$/i);
+    if (!m) return false;
+    const v = parseInt(m[1], 16);
+    return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) > 140;
+  }
+  const customColor = document.getElementById("customColor");
+  customColor.addEventListener("input", () => {
+    body.style.setProperty("--custom-bg", customColor.value);
+    envGroup.querySelectorAll(".env-btn").forEach(b => b.classList.remove("on"));
+    body.dataset.env = "custom";
+    body.classList.toggle("env-light", isLight(customColor.value));
+  });
+})();
+</script>
+</body>
+</html>

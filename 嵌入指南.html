@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aiinfinite logo · 网站嵌入指南</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+    background: #0b1526; color: #dfe9ff; padding: 48px 6vw 80px; line-height: 1.75;
+  }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  .sub { color: #8fa3c8; font-size: 14px; margin-bottom: 40px; }
+  h2 { font-size: 19px; margin: 44px 0 12px; padding-top: 28px; border-top: 1px solid rgba(140,180,255,.15); }
+  h2 .tag { font-size: 12px; color: #ffd76a; border: 1px solid rgba(255,215,106,.4); border-radius: 99px; padding: 1px 10px; margin-left: 10px; vertical-align: 3px; }
+  p { font-size: 14.5px; color: #b9c8e6; max-width: 900px; }
+  .demo {
+    margin: 18px 0 10px; padding: 34px; border-radius: 14px;
+    background:
+      linear-gradient(120deg, rgba(93,184,255,.06), rgba(255,215,106,.06)),
+      radial-gradient(900px at 50% 40%, #14305e, #0a1c3c 60%, #060f22);
+    border: 1px solid rgba(140,180,255,.15);
+    display: flex; justify-content: center;
+  }
+  .demo img { width: min(560px, 80%); height: auto; }
+  pre {
+    background: #0d1b30; border: 1px solid rgba(140,180,255,.18); border-radius: 10px;
+    padding: 16px 18px; font: 12.5px/1.7 "SF Mono", ui-monospace, Menlo, monospace;
+    color: #cfe3ff; overflow-x: auto; max-width: 900px; margin-top: 12px;
+  }
+  pre .c { color: #6f86ad; } pre .s { color: #ffd76a; }
+  table { border-collapse: collapse; font-size: 13.5px; margin-top: 14px; }
+  td, th { border: 1px solid rgba(140,180,255,.18); padding: 8px 14px; text-align: left; }
+  th { color: #8fa3c8; font-weight: 500; }
+  td code { color: #ffd76a; }
+  .note { font-size: 13px; color: #7e93b8; margin-top: 10px; max-width: 900px; }
+  b { color: #eaf2ff; }
+</style>
+</head>
+<body>
+  <h1>aiinfinite 流光 logo · 网站嵌入指南</h1>
+  <div class="sub">两种动画文件任选其一，均为透明背景，放到任何页面背景上都自适应</div>
+
+  <h2>方式一：一张图片，一行代码<span class="tag">推荐</span></h2>
+  <p><b>动画 SVG 本身就是图片文件</b>，动画已经封装在里面，浏览器自动播放、无限循环、透明背景，不需要任何 JS/CSS。把文件拷进你网站的静态目录（如 <b>public/</b>、<b>static/</b>、或直接和网页放一起），然后：</p>
+  <pre>&lt;img src=<span class="s">"aiinfinite-logo-flow.svg"</span> alt=<span class="s">"aiinfinite"</span> style=<span class="s">"width: min(520px, 80vw)"</span>&gt;</pre>
+  <div class="demo"><img src="aiinfinite-logo-flow.svg" alt="aiinfinite 流光 logo"></div>
+  <p class="note">▲ 上面就是真实的 <code>&lt;img&gt;</code> 嵌入效果。宽度由你随意控制，比例自动保持。</p>
+
+  <h2>为什么之前看着模糊？<span class="tag">已修复</span></h2>
+  <p>三个原因，前两个已解决：① 旧轻量版内嵌图只有 1100px 且压缩较狠，一放大就糊——现主文件已换成 <b>1550px 高质量 AVIF</b>，发丝纹理级清晰；② 如果你是在<b>访达快速预览 / 缩略图</b>里看 svg，那是低清静态预览，不代表真实效果，请以浏览器打开为准；③ <b>白色/浅色底上整体发淡是发光 logo 的物理特性</b>（半透明光晕融进白底），不是模糊——按下面的投影技巧即可改善。文件大小只有 328 KB，页面加载无压力。</p>
+
+  <h2>方式二：前端工程里 import（Vite / webpack / Next.js）</h2>
+  <p>把 SVG 放进 <b>src/assets/</b>，像用图片一样导入即可：</p>
+  <pre><span class="c">// React 示例</span>
+import logoFlow from <span class="s">"./assets/aiinfinite-logo-flow.svg"</span>;
+
+&lt;img src={logoFlow} alt=<span class="s">"aiinfinite"</span> style={{ width: 520 }} /&gt;</pre>
+
+  <h2>方式三：作为背景图（CSS）</h2>
+  <pre>.hero {
+  background-image: url(<span class="s">"aiinfinite-logo-flow.svg"</span>);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: min(520px, 80%);
+}</pre>
+
+  <h2>浅色页面怎么办？</h2>
+  <p>logo 是亮色笔迹，在浅色背景上建议加一层淡淡的深色投影保持对比（一行 CSS）：</p>
+  <pre>&lt;img src=<span class="s">"aiinfinite-logo-flow-compact.svg"</span> style=<span class="s">"width:520px; filter: drop-shadow(0 4px 14px rgba(20,40,90,.35))"</span>&gt;</pre>
+
+  <h2>文件怎么选？</h2>
+  <table>
+    <tr><th>文件</th><th>大小</th><th>用途</th></tr>
+    <tr><td><code>aiinfinite-logo-flow.svg</code></td><td>328 KB</td><td>⭐ 网站嵌入首选：1550px 高清内图，任何尺寸都清晰</td></tr>
+    <tr><td><code>aiinfinite-logo-flow-compact.svg</code></td><td>210 KB</td><td>轻量版：只用于小尺寸（≤350px 宽，页脚/导航栏）</td></tr>
+    <tr><td><code>logo-transparent.png</code></td><td>1.8 MB</td><td>静态透明 logo：打印、OG 分享图、PPT 等</td></tr>
+    <tr><td><code>logo-transparent-1200.png</code></td><td>427 KB</td><td>静态透明 logo 网页版（原尺寸 1774×887）</td></tr>
+  </table>
+
+  <h2>要不要静态首帧 / 降低动效？</h2>
+  <p class="note">· 系统开启了"减少动态效果"时，SMIL 动画仍会播放；若需无障碍合规，可用 <code>&lt;picture&gt;</code> + <code>prefers-reduced-motion</code> 媒体查询在弱动效环境下回退到静态 PNG。<br>· 需要 MP4/WebM 视频版（用于视频号、开场动画）随时说一声，我可以用无头浏览器直接录一版。</p>
+
+  <h2>常见问题</h2>
+  <p class="note">· <b>放在 GitHub Pages / Nginx / OSS 上要配置 MIME 吗？</b> 不用，.svg 是标准静态资源，所有主流服务器默认支持。<br>· <b>SEO / 无障碍：</b> 记得写 alt（上面示例已带）。<br>· <b>本机双击 svg 文件</b>会用浏览器直接打开，动画照常播放（个别浏览器内置预览器不支持 SMIL，如 macOS 快速预览，属正常，以浏览器为准）。</p>
+
+<script>/* 演示页无需脚本 */</script>
+</body>
+</html>
